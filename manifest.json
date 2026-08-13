@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/stephenmann/upcoming-episodes-plugin/main/docs/img/logo.png",
     "versions": [
       {
+        "version": "1.0.0.0",
+        "changelog": "Merge branch 'main' of https://github.com/stephenmann/upcoming-episodes-plugin",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/stephenmann/upcoming-episodes-plugin/releases/download/v1.0.0/upcoming-episodes_1.0.0.0.zip",
+        "checksum": "ec1d9675da70fb86b4652b6ef16dd208",
+        "timestamp": "2026-08-13T17:10:49Z"
+      },
+      {
         "version": "0.2.1.0",
         "changelog": "Add message placement configuration and update controller authorization",
         "targetAbi": "10.11.0.0",
