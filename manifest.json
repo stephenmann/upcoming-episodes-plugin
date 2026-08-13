@@ -8,6 +8,14 @@
     "category": "Metadata",
     "versions": [
       {
+        "version": "0.2.0.0",
+        "changelog": "Added example image.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/stephenmann/upcoming-episodes-plugin/releases/download/v0.2.0/upcoming-episodes_0.2.0.0.zip",
+        "checksum": "67facf60d7acdacbdea93fc8804f43fd",
+        "timestamp": "2026-08-13T15:50:34Z"
+      },
+      {
         "version": "0.1.1.0",
         "changelog": "Upgrade to .NET 9.0 and update dependencies; modify build and release workflows",
         "targetAbi": "10.11.0.0",
