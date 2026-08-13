@@ -6,6 +6,7 @@
     "overview": "Shows a next episode message on series using the Sonarr calendar.",
     "owner": "StupidDevMonkey",
     "category": "Metadata",
+    "imageUrl": "https://raw.githubusercontent.com/stephenmann/upcoming-episodes-plugin/main/docs/img/logo.png",
     "versions": [
       {
         "version": "0.2.0.0",

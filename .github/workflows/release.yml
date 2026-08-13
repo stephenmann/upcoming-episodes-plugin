@@ -68,6 +68,7 @@ jobs:
           TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           mkdir -p artifacts staging
           cp "${BUILD_OUTPUT}/${ASSEMBLY}" staging/
+          cp docs/img/logo.png staging/logo.png
           jq -n \
             --argjson plugin "$(jq '.[0]' manifest.json)" \
             --arg version "$VERSION" \
@@ -86,7 +87,8 @@ jobs:
               timestamp: $timestamp,
               version: $version,
               status: "Active",
-              autoUpdate: true
+              autoUpdate: true,
+              imagePath: "logo.png"
             }' > staging/meta.json
           (cd staging && zip -r "../artifacts/${ARTIFACT_ZIP}" .)
           test -f "artifacts/${ARTIFACT_ZIP}"

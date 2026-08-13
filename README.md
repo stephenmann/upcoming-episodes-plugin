@@ -1,3 +1,4 @@
+![Upcooming Episodes logo](docs/img/logo.png)
 # Upcoming Episodes (Jellyfin plugin)
 
 Queries the [Sonarr](https://sonarr.tv) calendar on a nightly schedule and writes a short
@@ -14,23 +15,38 @@ Requires Jellyfin 10.11 or newer.
 | Episode number is 1, current week | `Season premiere Friday.` |
 | Episode number is 1, later | `Season premiere March 5th.` |
 
+## Placement
+
+### Next to the star rating
+
+![Next episode message shown in bold gold after the star rating in the series header](docs/img/banner.png)
+
+The message becomes its own element in the series header, immediately after the star rating,
+in bold gold. This needs the
+[File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation)
+plugin: the plugin registers a small script with it on startup, and that script reads
+`GET /UpcomingEpisodes/Messages` from the authenticated web client.
+
+### Series overview
+
+![Next episode message shown as the first line of the series overview](docs/img/overview.png)
+
 The message is prepended to the series overview, separated by a blank line. The original
 overview is stored in `plugins/configurations/Jellyfin.Plugin.UpcomingEpisodes.state.json`
 and restored once the series no longer has an upcoming episode.
 
-## Placement
+### Choosing
 
-Placement is chosen automatically:
+The **Message placement** setting offers:
 
-- **With the [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation)
-  plugin installed**, the message is shown as its own bold golden element in the series header,
-  directly after the star rating. The overview is left untouched, and any message written by an
-  earlier run is removed from it.
-- **Without it**, the message is prepended to the series overview as described above.
+| Setting | Behaviour |
+| --- | --- |
+| Automatic (default) | Next to the star rating when File Transformation is available, otherwise the overview |
+| Series overview | Always the overview |
+| Next to the star rating | Always the header element |
+| Both | Both places |
 
-The plugin registers a small script with File Transformation on startup; that script reads
-`GET /UpcomingEpisodes/Messages` from the authenticated web client. If registration fails the
-plugin logs it and falls back to the overview.
+Switching away from the overview restores any overview the plugin previously modified.
 
 ## Configuration
 
@@ -40,6 +56,7 @@ Dashboard → Plugins → Upcoming Episodes:
 - **Lookahead days** – capped at 30
 - **Nightly run hour / minute** – used as the default trigger of the scheduled task
 - **First day of the week** – decides whether an air date is still "this week"
+- **Message placement** – see [Placement](#placement)
 - Optional switches for unmonitored episodes and episodes that already have a file
 
 Series are matched to Sonarr by TVDB id, then IMDb id, then TMDB id, and finally by
