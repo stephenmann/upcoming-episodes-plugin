@@ -1,0 +1,11 @@
+[
+  {
+    "guid": "a7f0f2b6-9d2c-4a4b-9f1a-6c4a0d2b7e31",
+    "name": "Upcoming Episodes",
+    "description": "Queries the Sonarr calendar on a nightly schedule and writes a short \"Next episode ...\" or \"Season premiere ...\" message onto the overview of the matching series in the Jellyfin library.",
+    "overview": "Shows a next episode message on series using the Sonarr calendar.",
+    "owner": "StupidDevMonkey",
+    "category": "Metadata",
+    "versions": []
+  }
+]

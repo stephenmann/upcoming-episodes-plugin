@@ -1,0 +1,151 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  PROJECT: ./Jellyfin.Plugin.UpcomingEpisodes/Jellyfin.Plugin.UpcomingEpisodes.csproj
+  ASSEMBLY: Jellyfin.Plugin.UpcomingEpisodes.dll
+  ARTIFACT_NAME: upcoming-episodes
+  TARGET_ABI: 10.10.0.0
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Resolve version
+        id: version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          # Jellyfin expects a four part version.
+          while [ "$(echo "$VERSION" | awk -F. '{print NF}')" -lt 4 ]; do VERSION="${VERSION}.0"; done
+          CHANGELOG="$(git tag -l --format='%(contents:body)' "$TAG")"
+          if [ -z "$CHANGELOG" ]; then CHANGELOG="$(git tag -l --format='%(contents:subject)' "$TAG")"; fi
+          if [ -z "$CHANGELOG" ]; then CHANGELOG="Release ${VERSION}"; fi
+          {
+            echo "version=$VERSION"
+            echo "zip=${ARTIFACT_NAME}_${VERSION}.zip"
+            echo "changelog<<CHANGELOG_EOF"
+            echo "$CHANGELOG"
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          dotnet build "$PROJECT" -c Release --warnaserror \
+            -p:Version="$VERSION" -p:AssemblyVersion="$VERSION" -p:FileVersion="$VERSION"
+
+      - name: Package
+        id: package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          ZIP: ${{ steps.version.outputs.zip }}
+          CHANGELOG: ${{ steps.version.outputs.changelog }}
+        run: |
+          set -euo pipefail
+          TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          mkdir -p artifacts staging
+          cp "./Jellyfin.Plugin.UpcomingEpisodes/bin/Release/net8.0/${ASSEMBLY}" staging/
+          jq -n \
+            --argjson plugin "$(jq '.[0]' manifest.json)" \
+            --arg version "$VERSION" \
+            --arg targetAbi "$TARGET_ABI" \
+            --arg timestamp "$TIMESTAMP" \
+            --arg changelog "$CHANGELOG" \
+            '{
+              category: $plugin.category,
+              changelog: $changelog,
+              description: $plugin.description,
+              guid: $plugin.guid,
+              name: $plugin.name,
+              overview: $plugin.overview,
+              owner: $plugin.owner,
+              targetAbi: $targetAbi,
+              timestamp: $timestamp,
+              version: $version,
+              status: "Active",
+              autoUpdate: true
+            }' > staging/meta.json
+          (cd staging && zip -r "../artifacts/${ZIP}" .)
+          {
+            echo "checksum=$(md5sum "artifacts/${ZIP}" | cut -d' ' -f1)"
+            echo "timestamp=$TIMESTAMP"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ steps.version.outputs.version }}
+          body: ${{ steps.version.outputs.changelog }}
+          files: artifacts/${{ steps.version.outputs.zip }}
+
+      - name: Checkout default branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: default-branch
+
+      - name: Update manifest
+        working-directory: default-branch
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          CHANGELOG: ${{ steps.version.outputs.changelog }}
+          CHECKSUM: ${{ steps.package.outputs.checksum }}
+          TIMESTAMP: ${{ steps.package.outputs.timestamp }}
+          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ steps.version.outputs.zip }}
+        run: |
+          set -euo pipefail
+          jq \
+            --arg version "$VERSION" \
+            --arg changelog "$CHANGELOG" \
+            --arg targetAbi "$TARGET_ABI" \
+            --arg sourceUrl "$SOURCE_URL" \
+            --arg checksum "$CHECKSUM" \
+            --arg timestamp "$TIMESTAMP" \
+            '.[0].versions = ([{
+              version: $version,
+              changelog: $changelog,
+              targetAbi: $targetAbi,
+              sourceUrl: $sourceUrl,
+              checksum: $checksum,
+              timestamp: $timestamp
+            }] + (.[0].versions | map(select(.version != $version))))' \
+            manifest.json > manifest.updated.json
+          mv manifest.updated.json manifest.json
+
+      - name: Commit manifest
+        working-directory: default-branch
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- manifest.json; then
+            echo "manifest.json is already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          git commit -m "Add ${VERSION} to the plugin manifest"
+          git push
