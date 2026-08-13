@@ -74,7 +74,7 @@ public class ScheduleSynchronizer : IHostedService
 
         var existing = worker.Triggers.ToList();
         if (existing.Count == 1
-            && existing[0].Type == TaskTriggerInfo.TriggerDaily
+            && existing[0].Type == TaskTriggerInfoType.DailyTrigger
             && existing[0].TimeOfDayTicks == timeOfDay.Ticks)
         {
             return;
@@ -84,7 +84,7 @@ public class ScheduleSynchronizer : IHostedService
         {
             new TaskTriggerInfo
             {
-                Type = TaskTriggerInfo.TriggerDaily,
+                Type = TaskTriggerInfoType.DailyTrigger,
                 TimeOfDayTicks = timeOfDay.Ticks
             }
         };

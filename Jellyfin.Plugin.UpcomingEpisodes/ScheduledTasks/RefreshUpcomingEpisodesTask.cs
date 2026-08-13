@@ -53,7 +53,7 @@ public class RefreshUpcomingEpisodesTask : IScheduledTask, IConfigurableSchedule
 
         yield return new TaskTriggerInfo
         {
-            Type = TaskTriggerInfo.TriggerDaily,
+            Type = TaskTriggerInfoType.DailyTrigger,
             TimeOfDayTicks = new TimeSpan(hour, minute, 0).Ticks
         };
     }

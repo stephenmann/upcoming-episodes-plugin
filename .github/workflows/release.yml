@@ -10,9 +10,10 @@ permissions:
 
 env:
   PROJECT: ./Jellyfin.Plugin.UpcomingEpisodes/Jellyfin.Plugin.UpcomingEpisodes.csproj
+  BUILD_OUTPUT: ./Jellyfin.Plugin.UpcomingEpisodes/bin/Release/net9.0
   ASSEMBLY: Jellyfin.Plugin.UpcomingEpisodes.dll
   ARTIFACT_NAME: upcoming-episodes
-  TARGET_ABI: 10.10.0.0
+  TARGET_ABI: 10.11.0.0
 
 jobs:
   release:
@@ -25,7 +26,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 9.0.x
 
       - name: Resolve version
         id: version
@@ -41,7 +42,7 @@ jobs:
           if [ -z "$CHANGELOG" ]; then CHANGELOG="Release ${VERSION}"; fi
           {
             echo "version=$VERSION"
-            echo "zip=${ARTIFACT_NAME}_${VERSION}.zip"
+            echo "artifact=${ARTIFACT_NAME}_${VERSION}.zip"
             echo "changelog<<CHANGELOG_EOF"
             echo "$CHANGELOG"
             echo "CHANGELOG_EOF"
@@ -59,13 +60,14 @@ jobs:
         id: package
         env:
           VERSION: ${{ steps.version.outputs.version }}
-          ZIP: ${{ steps.version.outputs.zip }}
+          # Must not be named ZIP: the zip utility reads that variable as extra options.
+          ARTIFACT_ZIP: ${{ steps.version.outputs.artifact }}
           CHANGELOG: ${{ steps.version.outputs.changelog }}
         run: |
           set -euo pipefail
           TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           mkdir -p artifacts staging
-          cp "./Jellyfin.Plugin.UpcomingEpisodes/bin/Release/net8.0/${ASSEMBLY}" staging/
+          cp "${BUILD_OUTPUT}/${ASSEMBLY}" staging/
           jq -n \
             --argjson plugin "$(jq '.[0]' manifest.json)" \
             --arg version "$VERSION" \
@@ -86,9 +88,13 @@ jobs:
               status: "Active",
               autoUpdate: true
             }' > staging/meta.json
-          (cd staging && zip -r "../artifacts/${ZIP}" .)
+          (cd staging && zip -r "../artifacts/${ARTIFACT_ZIP}" .)
+          test -f "artifacts/${ARTIFACT_ZIP}"
+          CHECKSUM="$(md5sum "artifacts/${ARTIFACT_ZIP}" | cut -d' ' -f1)"
+          test -n "$CHECKSUM"
+          unzip -l "artifacts/${ARTIFACT_ZIP}"
           {
-            echo "checksum=$(md5sum "artifacts/${ZIP}" | cut -d' ' -f1)"
+            echo "checksum=$CHECKSUM"
             echo "timestamp=$TIMESTAMP"
           } >> "$GITHUB_OUTPUT"
 
@@ -98,7 +104,8 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: ${{ steps.version.outputs.version }}
           body: ${{ steps.version.outputs.changelog }}
-          files: artifacts/${{ steps.version.outputs.zip }}
+          files: artifacts/${{ steps.version.outputs.artifact }}
+          fail_on_unmatched_files: true
 
       - name: Checkout default branch
         uses: actions/checkout@v4
@@ -113,7 +120,7 @@ jobs:
           CHANGELOG: ${{ steps.version.outputs.changelog }}
           CHECKSUM: ${{ steps.package.outputs.checksum }}
           TIMESTAMP: ${{ steps.package.outputs.timestamp }}
-          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ steps.version.outputs.zip }}
+          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ steps.version.outputs.artifact }}
         run: |
           set -euo pipefail
           jq \

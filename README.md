@@ -3,6 +3,8 @@
 Queries the [Sonarr](https://sonarr.tv) calendar on a nightly schedule and writes a short
 "next episode" message onto the matching series in the Jellyfin library.
 
+Requires Jellyfin 10.11 or newer.
+
 ## Messages
 
 | Situation | Message |
@@ -49,7 +51,7 @@ plugins folder. Restart the server to finish the installation.
 dotnet build .\Jellyfin.Plugin.UpcomingEpisodes\Jellyfin.Plugin.UpcomingEpisodes.csproj -c Release
 ```
 
-Copy the produced `Jellyfin.Plugin.UpcomingEpisodes.dll` into
+Copy `Jellyfin.Plugin.UpcomingEpisodes.dll` from `bin\Release\net9.0` into
 `<jellyfin data>/plugins/Upcoming Episodes/` and restart the server.
 
 ## Releasing
