@@ -1,5 +1,6 @@
 using Jellyfin.Plugin.UpcomingEpisodes.Services;
 using Jellyfin.Plugin.UpcomingEpisodes.Sonarr;
+using Jellyfin.Plugin.UpcomingEpisodes.Web;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +17,10 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
     {
         serviceCollection.AddSingleton<SonarrApiClient>();
         serviceCollection.AddSingleton<OverviewStateStore>();
+        serviceCollection.AddSingleton<UpcomingMessageStore>();
+        serviceCollection.AddSingleton<FileTransformationRegistrar>();
         serviceCollection.AddSingleton<UpcomingEpisodesService>();
+        serviceCollection.AddHostedService(provider => provider.GetRequiredService<FileTransformationRegistrar>());
         serviceCollection.AddHostedService<ScheduleSynchronizer>();
     }
 }

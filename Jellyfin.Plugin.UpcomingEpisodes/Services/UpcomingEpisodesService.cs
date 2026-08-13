@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using Jellyfin.Data.Enums;
 using Jellyfin.Plugin.UpcomingEpisodes.Sonarr;
+using Jellyfin.Plugin.UpcomingEpisodes.Web;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
@@ -20,6 +21,8 @@ public class UpcomingEpisodesService
     private readonly ILibraryManager _libraryManager;
     private readonly SonarrApiClient _sonarrApiClient;
     private readonly OverviewStateStore _stateStore;
+    private readonly UpcomingMessageStore _messageStore;
+    private readonly FileTransformationRegistrar _fileTransformation;
     private readonly ILogger<UpcomingEpisodesService> _logger;
 
     /// <summary>
@@ -28,16 +31,22 @@ public class UpcomingEpisodesService
     /// <param name="libraryManager">Instance of the <see cref="ILibraryManager"/> interface.</param>
     /// <param name="sonarrApiClient">The Sonarr API client.</param>
     /// <param name="stateStore">The overview state store.</param>
+    /// <param name="messageStore">The message store read by the web client.</param>
+    /// <param name="fileTransformation">The File Transformation registrar.</param>
     /// <param name="logger">Instance of the <see cref="ILogger{UpcomingEpisodesService}"/> interface.</param>
     public UpcomingEpisodesService(
         ILibraryManager libraryManager,
         SonarrApiClient sonarrApiClient,
         OverviewStateStore stateStore,
+        UpcomingMessageStore messageStore,
+        FileTransformationRegistrar fileTransformation,
         ILogger<UpcomingEpisodesService> logger)
     {
         _libraryManager = libraryManager;
         _sonarrApiClient = sonarrApiClient;
         _stateStore = stateStore;
+        _messageStore = messageStore;
+        _fileTransformation = fileTransformation;
         _logger = logger;
     }
 
@@ -71,7 +80,9 @@ public class UpcomingEpisodesService
         progress.Report(30);
 
         var state = _stateStore.Load();
+        var messages = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var updatedItemIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var useOverview = !_fileTransformation.IsRegistered;
         var processed = 0;
 
         foreach (var (item, entry) in MatchSeries(seriesInLibrary, nextEpisodes))
@@ -85,18 +96,29 @@ public class UpcomingEpisodesService
                 today,
                 configuration.FirstDayOfWeek);
 
-            await ApplyMessageAsync(item, message, state, cancellationToken).ConfigureAwait(false);
-            updatedItemIds.Add(item.Id.ToString("N", CultureInfo.InvariantCulture));
+            var itemId = item.Id.ToString("N", CultureInfo.InvariantCulture);
+            messages[itemId] = message;
+
+            if (useOverview)
+            {
+                await ApplyMessageAsync(item, message, state, cancellationToken).ConfigureAwait(false);
+                updatedItemIds.Add(itemId);
+            }
 
             processed++;
             progress.Report(30 + (60d * processed / Math.Max(nextEpisodes.Count, 1)));
         }
 
+        // Overviews touched by an earlier run are restored when the message moved to the web client.
         await ClearStaleMessagesAsync(state, updatedItemIds, cancellationToken).ConfigureAwait(false);
 
         _stateStore.Save(state);
+        _messageStore.Replace(messages);
         progress.Report(100);
-        _logger.LogInformation("Upcoming episode messages applied to {Count} series.", updatedItemIds.Count);
+        _logger.LogInformation(
+            "Upcoming episode messages set for {Count} series, shown {Placement}.",
+            messages.Count,
+            useOverview ? "in the series overview" : "next to the star rating");
     }
 
     private static Dictionary<string, SonarrCalendarItem> GetNextEpisodePerSeries(

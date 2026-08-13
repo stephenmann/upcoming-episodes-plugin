@@ -18,6 +18,20 @@ The message is prepended to the series overview, separated by a blank line. The 
 overview is stored in `plugins/configurations/Jellyfin.Plugin.UpcomingEpisodes.state.json`
 and restored once the series no longer has an upcoming episode.
 
+## Placement
+
+Placement is chosen automatically:
+
+- **With the [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation)
+  plugin installed**, the message is shown as its own bold golden element in the series header,
+  directly after the star rating. The overview is left untouched, and any message written by an
+  earlier run is removed from it.
+- **Without it**, the message is prepended to the series overview as described above.
+
+The plugin registers a small script with File Transformation on startup; that script reads
+`GET /UpcomingEpisodes/Messages` from the authenticated web client. If registration fails the
+plugin logs it and falls back to the overview.
+
 ## Configuration
 
 Dashboard → Plugins → Upcoming Episodes:
