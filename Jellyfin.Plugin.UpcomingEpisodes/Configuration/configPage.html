@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Upcoming Episodes</title>
+</head>
+<body>
+<div id="UpcomingEpisodesConfigPage" data-role="page" class="page type-interior pluginConfigurationPage">
+    <div data-role="content">
+        <div class="content-primary">
+            <form id="UpcomingEpisodesConfigForm">
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="SonarrUrl">Sonarr URL</label>
+                    <input id="SonarrUrl" name="SonarrUrl" type="url" is="emby-input" required />
+                    <div class="fieldDescription">Base URL of the Sonarr server, e.g. http://localhost:8989.</div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="SonarrApiKey">Sonarr API key</label>
+                    <input id="SonarrApiKey" name="SonarrApiKey" type="password" is="emby-input" required />
+                    <div class="fieldDescription">Sonarr &rarr; Settings &rarr; General &rarr; API Key.</div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="LookaheadDays">Lookahead days</label>
+                    <input id="LookaheadDays" name="LookaheadDays" type="number" is="emby-input" min="1" max="30" required />
+                    <div class="fieldDescription">How far ahead to query the calendar. Maximum 30 days.</div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="ScheduleHour">Nightly run hour (0-23)</label>
+                    <input id="ScheduleHour" name="ScheduleHour" type="number" is="emby-input" min="0" max="23" required />
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="ScheduleMinute">Nightly run minute (0-59)</label>
+                    <input id="ScheduleMinute" name="ScheduleMinute" type="number" is="emby-input" min="0" max="59" required />
+                    <div class="fieldDescription">
+                        Saving replaces the trigger of Dashboard &rarr; Scheduled Tasks &rarr;
+                        Refresh upcoming episode messages.
+                    </div>
+                </div>
+
+                <div class="selectContainer">
+                    <label class="selectLabel" for="FirstDayOfWeek">First day of the week</label>
+                    <select is="emby-select" id="FirstDayOfWeek" name="FirstDayOfWeek">
+                        <option value="0">Sunday</option>
+                        <option value="1">Monday</option>
+                    </select>
+                    <div class="fieldDescription">Used to decide if an air date is still in the current week.</div>
+                </div>
+
+                <label class="checkboxContainer">
+                    <input is="emby-checkbox" type="checkbox" id="IncludeUnmonitored" />
+                    <span>Include unmonitored episodes</span>
+                </label>
+
+                <label class="checkboxContainer">
+                    <input is="emby-checkbox" type="checkbox" id="IncludeDownloaded" />
+                    <span>Include episodes that already have a file</span>
+                </label>
+
+                <div>
+                    <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                        <span>Save</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        (function () {
+            var pluginId = 'a7f0f2b6-9d2c-4a4b-9f1a-6c4a0d2b7e31';
+
+            document.querySelector('#UpcomingEpisodesConfigPage').addEventListener('pageshow', function () {
+                Dashboard.showLoadingMsg();
+                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                    document.querySelector('#SonarrUrl').value = config.SonarrUrl || '';
+                    document.querySelector('#SonarrApiKey').value = config.SonarrApiKey || '';
+                    document.querySelector('#LookaheadDays').value = config.LookaheadDays;
+                    document.querySelector('#ScheduleHour').value = config.ScheduleHour;
+                    document.querySelector('#ScheduleMinute').value = config.ScheduleMinute;
+                    document.querySelector('#FirstDayOfWeek').value = config.FirstDayOfWeek;
+                    document.querySelector('#IncludeUnmonitored').checked = !!config.IncludeUnmonitored;
+                    document.querySelector('#IncludeDownloaded').checked = !!config.IncludeDownloaded;
+                    Dashboard.hideLoadingMsg();
+                });
+            });
+
+            document.querySelector('#UpcomingEpisodesConfigForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                Dashboard.showLoadingMsg();
+                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                    config.SonarrUrl = document.querySelector('#SonarrUrl').value;
+                    config.SonarrApiKey = document.querySelector('#SonarrApiKey').value;
+                    config.LookaheadDays = parseInt(document.querySelector('#LookaheadDays').value, 10);
+                    config.ScheduleHour = parseInt(document.querySelector('#ScheduleHour').value, 10);
+                    config.ScheduleMinute = parseInt(document.querySelector('#ScheduleMinute').value, 10);
+                    config.FirstDayOfWeek = parseInt(document.querySelector('#FirstDayOfWeek').value, 10);
+                    config.IncludeUnmonitored = document.querySelector('#IncludeUnmonitored').checked;
+                    config.IncludeDownloaded = document.querySelector('#IncludeDownloaded').checked;
+                    ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                    });
+                });
+                return false;
+            });
+        })();
+    </script>
+</div>
+</body>
+</html>
