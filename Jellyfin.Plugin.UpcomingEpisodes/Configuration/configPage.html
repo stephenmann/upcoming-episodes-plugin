@@ -50,6 +50,21 @@
                     <div class="fieldDescription">Used to decide if an air date is still in the current week.</div>
                 </div>
 
+                <div class="selectContainer">
+                    <label class="selectLabel" for="Placement">Message placement</label>
+                    <select is="emby-select" id="Placement" name="Placement">
+                        <option value="0">Automatic</option>
+                        <option value="1">Series overview</option>
+                        <option value="2">Next to the star rating</option>
+                        <option value="3">Both</option>
+                    </select>
+                    <div class="fieldDescription">
+                        "Next to the star rating" needs the File Transformation plugin. Automatic uses it
+                        when it is installed and falls back to the overview. Pick "Series overview" or
+                        "Both" if the message does not appear in the header.
+                    </div>
+                </div>
+
                 <label class="checkboxContainer">
                     <input is="emby-checkbox" type="checkbox" id="IncludeUnmonitored" />
                     <span>Include unmonitored episodes</span>
@@ -82,6 +97,7 @@
                     document.querySelector('#ScheduleHour').value = config.ScheduleHour;
                     document.querySelector('#ScheduleMinute').value = config.ScheduleMinute;
                     document.querySelector('#FirstDayOfWeek').value = config.FirstDayOfWeek;
+                    document.querySelector('#Placement').value = config.Placement;
                     document.querySelector('#IncludeUnmonitored').checked = !!config.IncludeUnmonitored;
                     document.querySelector('#IncludeDownloaded').checked = !!config.IncludeDownloaded;
                     Dashboard.hideLoadingMsg();
@@ -98,6 +114,7 @@
                     config.ScheduleHour = parseInt(document.querySelector('#ScheduleHour').value, 10);
                     config.ScheduleMinute = parseInt(document.querySelector('#ScheduleMinute').value, 10);
                     config.FirstDayOfWeek = parseInt(document.querySelector('#FirstDayOfWeek').value, 10);
+                    config.Placement = parseInt(document.querySelector('#Placement').value, 10);
                     config.IncludeUnmonitored = document.querySelector('#IncludeUnmonitored').checked;
                     config.IncludeDownloaded = document.querySelector('#IncludeDownloaded').checked;
                     ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {

@@ -14,6 +14,16 @@ public static class IndexHtmlTransformation
     private static readonly Lazy<string> _script = new(ReadScript);
 
     /// <summary>
+    /// Gets a value indicating whether the File Transformation plugin has served a transformed index.html.
+    /// </summary>
+    public static bool HasRun { get; private set; }
+
+    /// <summary>
+    /// Gets or sets the sink used to report the first invocation, since the callback is static.
+    /// </summary>
+    internal static Action<string, int>? Report { get; set; }
+
+    /// <summary>
     /// Adds the client script to the served index.html.
     /// </summary>
     /// <param name="payload">The current file contents.</param>
@@ -21,6 +31,13 @@ public static class IndexHtmlTransformation
     public static string Transform(TransformationPayload payload)
     {
         var contents = payload?.Contents ?? string.Empty;
+
+        if (!HasRun)
+        {
+            HasRun = true;
+            Report?.Invoke(contents.Length == 0 ? "empty" : "ok", _script.Value.Length);
+        }
+
         if (contents.Length == 0 || contents.Contains(Marker, StringComparison.Ordinal))
         {
             return contents;

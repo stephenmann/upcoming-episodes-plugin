@@ -9,7 +9,7 @@ namespace Jellyfin.Plugin.UpcomingEpisodes.Api;
 /// Exposes the upcoming episode messages to the web client.
 /// </summary>
 [ApiController]
-[Authorize(Policy = "DefaultAuthorization")]
+[Authorize]
 [Route("UpcomingEpisodes")]
 public class UpcomingEpisodesController : ControllerBase
 {

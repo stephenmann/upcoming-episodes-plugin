@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Jellyfin.Data.Enums;
+using Jellyfin.Plugin.UpcomingEpisodes.Configuration;
 using Jellyfin.Plugin.UpcomingEpisodes.Sonarr;
 using Jellyfin.Plugin.UpcomingEpisodes.Web;
 using MediaBrowser.Controller.Entities;
@@ -82,7 +83,11 @@ public class UpcomingEpisodesService
         var state = _stateStore.Load();
         var messages = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var updatedItemIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var useOverview = !_fileTransformation.IsRegistered;
+        var placement = configuration.Placement;
+        var useBadge = placement is MessagePlacement.NextToRating or MessagePlacement.Both
+            || (placement == MessagePlacement.Automatic && _fileTransformation.IsRegistered);
+        var useOverview = placement is MessagePlacement.SeriesOverview or MessagePlacement.Both
+            || (placement == MessagePlacement.Automatic && !_fileTransformation.IsRegistered);
         var processed = 0;
 
         foreach (var (item, entry) in MatchSeries(seriesInLibrary, nextEpisodes))
@@ -97,7 +102,10 @@ public class UpcomingEpisodesService
                 configuration.FirstDayOfWeek);
 
             var itemId = item.Id.ToString("N", CultureInfo.InvariantCulture);
-            messages[itemId] = message;
+            if (useBadge)
+            {
+                messages[itemId] = message;
+            }
 
             if (useOverview)
             {
@@ -116,9 +124,10 @@ public class UpcomingEpisodesService
         _messageStore.Replace(messages);
         progress.Report(100);
         _logger.LogInformation(
-            "Upcoming episode messages set for {Count} series, shown {Placement}.",
-            messages.Count,
-            useOverview ? "in the series overview" : "next to the star rating");
+            "Upcoming episode messages set for {Count} series (overview: {Overview}, next to rating: {Badge}).",
+            processed,
+            useOverview,
+            useBadge);
     }
 
     private static Dictionary<string, SonarrCalendarItem> GetNextEpisodePerSeries(

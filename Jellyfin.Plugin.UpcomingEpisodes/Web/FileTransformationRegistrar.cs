@@ -59,14 +59,30 @@ public class FileTransformationRegistrar : IHostedService
 
     private bool Register()
     {
-        var pluginInterface = AssemblyLoadContext.All
-            .SelectMany(context => context.Assemblies)
-            .FirstOrDefault(assembly => assembly.FullName?.Contains(".FileTransformation", StringComparison.Ordinal) == true)
-            ?.GetType("Jellyfin.Plugin.FileTransformation.PluginInterface");
+        IndexHtmlTransformation.Report = (state, scriptLength) => _logger.LogInformation(
+            "index.html was transformed ({State}), injected script is {Length} bytes.",
+            state,
+            scriptLength);
 
-        var registerTransformation = pluginInterface?.GetMethod("RegisterTransformation");
+        var fileTransformationAssembly = AssemblyLoadContext.All
+            .SelectMany(context => context.Assemblies)
+            .FirstOrDefault(assembly => assembly.FullName?.Contains(".FileTransformation", StringComparison.Ordinal) == true);
+
+        if (fileTransformationAssembly is null)
+        {
+            _logger.LogInformation("No File Transformation assembly is loaded.");
+            return false;
+        }
+
+        var registerTransformation = fileTransformationAssembly
+            .GetType("Jellyfin.Plugin.FileTransformation.PluginInterface")
+            ?.GetMethod("RegisterTransformation");
+
         if (registerTransformation is null)
         {
+            _logger.LogWarning(
+                "{Assembly} does not expose PluginInterface.RegisterTransformation.",
+                fileTransformationAssembly.FullName);
             return false;
         }
 
@@ -89,6 +105,7 @@ public class FileTransformationRegistrar : IHostedService
         }
 
         registerTransformation.Invoke(null, new[] { parse.Invoke(null, new object[] { payloadJson }) });
+        _logger.LogInformation("Registered the index.html transformation with {Assembly}.", fileTransformationAssembly.FullName);
         return true;
     }
 }

@@ -46,4 +46,9 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets a value indicating whether episodes that already have a file are included.
     /// </summary>
     public bool IncludeDownloaded { get; set; }
+
+    /// <summary>
+    /// Gets or sets where the message is shown.
+    /// </summary>
+    public MessagePlacement Placement { get; set; } = MessagePlacement.Automatic;
 }
