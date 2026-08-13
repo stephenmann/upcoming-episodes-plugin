@@ -6,6 +6,15 @@
     "overview": "Shows a next episode message on series using the Sonarr calendar.",
     "owner": "StupidDevMonkey",
     "category": "Metadata",
-    "versions": []
+    "versions": [
+      {
+        "version": "0.1.1.0",
+        "changelog": "Upgrade to .NET 9.0 and update dependencies; modify build and release workflows",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/stephenmann/upcoming-episodes-plugin/releases/download/v0.1.1/upcoming-episodes_0.1.1.0.zip",
+        "checksum": "7badc1218b64eee1c3f89ee976051bd4",
+        "timestamp": "2026-08-13T15:23:24Z"
+      }
+    ]
   }
 ]
