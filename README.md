@@ -27,6 +27,12 @@ in bold gold. This needs the
 plugin: the plugin registers a small script with it on startup, and that script reads
 `GET /UpcomingEpisodes/Messages` from the authenticated web client.
 
+The script only does work for a few seconds after a navigation, caches the messages for five
+minutes and requests them only once a series page is open, so clients running on limited
+hardware — the LG webOS app and the Android app both run the web client — stay responsive
+while browsing. It does nothing at all on a client whose browser lacks the features it needs,
+and every step is guarded so it can never break the rest of the web client.
+
 ### Series overview
 
 ![Next episode message shown as the first line of the series overview](docs/img/overview.png)
