@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text.Json;
+using Jellyfin.Plugin.UpcomingEpisodes.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -32,6 +33,13 @@ public class FileTransformationRegistrar : IHostedService
     /// <inheritdoc />
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        if (Plugin.Instance?.Configuration.Placement == MessagePlacement.SeriesOverview)
+        {
+            _logger.LogInformation(
+                "Messages are added to the series overview, so index.html is left untouched. Restart Jellyfin after changing the placement.");
+            return Task.CompletedTask;
+        }
+
         try
         {
             IsRegistered = Register();
@@ -59,10 +67,10 @@ public class FileTransformationRegistrar : IHostedService
 
     private bool Register()
     {
-        IndexHtmlTransformation.Report = (state, scriptLength) => _logger.LogInformation(
-            "index.html was transformed ({State}), injected script is {Length} bytes.",
+        IndexHtmlTransformation.Report = (state, url) => _logger.LogInformation(
+            "index.html was transformed ({State}), the client script is served from {Url}.",
             state,
-            scriptLength);
+            url);
 
         var fileTransformationAssembly = AssemblyLoadContext.All
             .SelectMany(context => context.Assemblies)

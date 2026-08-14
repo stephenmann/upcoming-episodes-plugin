@@ -1,4 +1,5 @@
 using Jellyfin.Plugin.UpcomingEpisodes.Services;
+using Jellyfin.Plugin.UpcomingEpisodes.Web;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -34,5 +35,20 @@ public class UpcomingEpisodesController : ControllerBase
     public ActionResult<IReadOnlyDictionary<string, string>> GetMessages()
     {
         return Ok(_messageStore.GetAll());
+    }
+
+    /// <summary>
+    /// Gets the script index.html loads. Anonymous because index.html itself carries no access token.
+    /// </summary>
+    /// <response code="200">The script.</response>
+    /// <returns>The script.</returns>
+    [HttpGet("Script.js")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public ActionResult GetScript()
+    {
+        // The url is content addressed, so the response never goes stale.
+        Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+        return Content(ClientScript.Contents, "application/javascript; charset=utf-8");
     }
 }
