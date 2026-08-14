@@ -176,6 +176,10 @@
     }
 
     function queue() {
+        if (attempt >= ATTEMPT_DELAYS.length) {
+            return;
+        }
+
         timer = window.setTimeout(run, ATTEMPT_DELAYS[attempt++]);
     }
 
@@ -188,9 +192,7 @@
             log(err);
         }
 
-        if (attempt < ATTEMPT_DELAYS.length) {
-            queue();
-        }
+        queue();
     }
 
     // Called once per navigation: the detail page is built asynchronously, so the
