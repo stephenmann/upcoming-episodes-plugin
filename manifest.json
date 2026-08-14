@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/stephenmann/upcoming-episodes-plugin/main/docs/img/logo.png",
     "versions": [
       {
+        "version": "1.0.2.0",
+        "changelog": "Add script handling and configuration updates for upcoming episodes",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/stephenmann/upcoming-episodes-plugin/releases/download/v1.0.2/upcoming-episodes_1.0.2.0.zip",
+        "checksum": "c6ff0b2158f16862a085ec59b459d733",
+        "timestamp": "2026-08-14T16:34:25Z"
+      },
+      {
         "version": "1.0.1.0",
         "changelog": "Fix unresponsive web client on webOS and Android",
         "targetAbi": "10.11.0.0",
